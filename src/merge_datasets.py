@@ -23,5 +23,3 @@ df = pd.concat(
      load_sul[['regiao', 'carga(MWmed)']].reset_index(drop=True)],
     axis=1
 )
-
-print(df)
