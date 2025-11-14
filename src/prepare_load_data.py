@@ -1,7 +1,6 @@
 import pandas as pd
 from pathlib import Path
 
-
 def load_raw_load_data():
     """
     Lê o arquivo bruto de carga elétrica na pasta data/raw.
@@ -54,7 +53,3 @@ def load_regions():
     return df_sul, df_sudeste, df_norte, df_nordeste
 
 
-# --- Execução direta (opcional) ---
-if __name__ == "__main__":
-    df_sul, df_se, df_norte, df_ne = load_regions()
-    print(df_sul.head())
