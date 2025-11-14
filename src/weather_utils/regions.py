@@ -5,7 +5,7 @@ DATA_DIR = Path(r"C:\Users\guica\OneDrive\Documentos\GitHub\CurrentFlow-2.0\data
 REGIONS = {
     "norte": [
         DATA_DIR / "dados_belem_A201_D.csv",
-        DATA_DIR / "dados_manaus_A123_D.csv",
+        DATA_DIR / "dados_manaus_A101_D.csv",
         DATA_DIR / "dados_porto_velho_A925_D.csv",
     ],
     "nordeste": [
