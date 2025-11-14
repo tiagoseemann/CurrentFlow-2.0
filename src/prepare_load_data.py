@@ -24,7 +24,7 @@ def filtrar_regiao(df, codigo):
         .reset_index(drop=True)
     )
 
-# Aplicações
+# Dataframes by regions
 df_sul      = filtrar_regiao(df, 'S')
 df_sudeste  = filtrar_regiao(df, 'SE')
 df_norte    = filtrar_regiao(df, 'N')
