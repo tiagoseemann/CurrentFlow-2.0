@@ -22,6 +22,8 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+data/
+notebooks_explore/
 
 # UV específico
 .venv/
