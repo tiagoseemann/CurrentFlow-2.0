@@ -46,7 +46,7 @@ def serie(df):
     y = st.selectbox("Variável", cols)
 
     # Plota a série temporal
-    fig = px.line(df, x="data", y=y)
+    fig = px.line(df, x="data", y=y, markers=True)
     st.plotly_chart(fig, use_container_width=True)
 
 
