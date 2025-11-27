@@ -22,7 +22,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-data/
+data/raw/
 notebooks_explore/
 
 # UV específico

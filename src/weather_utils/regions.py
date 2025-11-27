@@ -1,7 +1,9 @@
 from pathlib import Path
 
+# Diretório onde arquivos do INMET estão armazenados
 DATA_DIR = Path(r"C:\Users\guica\OneDrive\Documentos\GitHub\CurrentFlow-2.0\data\raw\inmet")
 
+# Mapeamento das regiões para os arquivos brutos
 REGIONS = {
     "norte": [
         DATA_DIR / "dados_belem_A201_D.csv",
@@ -24,10 +26,10 @@ REGIONS = {
     ],
 }
 
-
 """
+Regiões e cidades usadas:
 Norte:      Manaus - Belém - Porto Velho
 Nordeste:   Fortaleza - Salvador
-Sul:        Porto Alegre (Jardim botânico) - Curitiba - Florianópolis
-Sudeste:    São Paulo (Interlagos) - Rio de Janeiro (Vila Militar) - Belo Horizonte (Pampulha)
+Sul:        Porto Alegre - Curitiba - Florianópolis
+Sudeste:    São Paulo - Rio de Janeiro - Belo Horizonte
 """
