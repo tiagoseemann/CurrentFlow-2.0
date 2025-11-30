@@ -13,10 +13,15 @@ def load_raw_load_data():
 def preprocess_load_data(df):
     """
     Seleciona colunas úteis e converte para tipos adequados.
+
+    Valores nulos -> zero
+
     Retorna dataframe pré-processado.
     """
     df = df[['din_instante', 'id_subsistema', 'val_cargaenergiamwmed']].copy()
     df['din_instante'] = pd.to_datetime(df['din_instante'])
+
+    df['val_cargaenergiamwmed'] = df['val_cargaenergiamwmed'].fillna(0)
     return df
 
 
