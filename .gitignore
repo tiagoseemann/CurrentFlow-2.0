@@ -22,6 +22,8 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+data/raw/
+notebooks_explore/
 
 # UV específico
 .venv/
@@ -51,6 +53,7 @@ htmlcov/
 
 # Jupyter Notebooks
 .ipynb_checkpoints
+.ipynb
 
 # Claude Code
 .claude/
