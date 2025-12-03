@@ -11,7 +11,19 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix, precision_recall_fscore_support
 from pathlib import Path
 import joblib
-from typing import Tuple, Dict, Optional
+from typing import Tuple, Dict, Optional, Literal
+
+
+def _check_xgboost():
+    """Check if XGBoost is available and working."""
+    try:
+        import xgboost as xgb
+        return True, xgb
+    except (ImportError, Exception) as e:
+        return False, None
+
+
+XGBOOST_AVAILABLE, xgb = _check_xgboost()
 
 
 class AnomalyDetector:
@@ -28,19 +40,42 @@ class AnomalyDetector:
     Target: is_anomaly (binary: 0 or 1)
     """
 
-    def __init__(self, random_state: int = 42):
+    def __init__(
+        self,
+        model_type: Literal['random_forest', 'xgboost'] = 'random_forest',
+        random_state: int = 42
+    ):
         """
         Initialize the anomaly detector.
 
         Args:
+            model_type: Type of model ('random_forest' or 'xgboost')
             random_state: Random seed for reproducibility
         """
-        self.model = RandomForestClassifier(
-            n_estimators=100,
-            max_depth=10,
-            random_state=random_state,
-            class_weight='balanced'  # Handle class imbalance
-        )
+        self.model_type = model_type
+        self.random_state = random_state
+
+        if model_type == 'random_forest':
+            self.model = RandomForestClassifier(
+                n_estimators=100,
+                max_depth=10,
+                random_state=random_state,
+                class_weight='balanced'
+            )
+        elif model_type == 'xgboost':
+            if not XGBOOST_AVAILABLE:
+                raise ImportError("XGBoost not available. Using Random Forest instead.")
+            self.model = xgb.XGBClassifier(
+                n_estimators=100,
+                max_depth=6,
+                learning_rate=0.1,
+                random_state=random_state,
+                scale_pos_weight=10,  # Handle class imbalance
+                eval_metric='logloss'
+            )
+        else:
+            raise ValueError(f"Unknown model_type: {model_type}")
+
         self.feature_names: Optional[list] = None
         self.is_trained = False
 
@@ -48,7 +83,7 @@ class AnomalyDetector:
         """
         Prepare features for training/prediction.
 
-        Simple feature engineering - only basic features.
+        Uses advanced features including lags and interactions.
 
         Args:
             df: Raw dataframe with energy and weather data
@@ -80,6 +115,21 @@ class AnomalyDetector:
             }
             features_df['region_code'] = df['region'].map(region_map)
 
+        # Advanced features (if available from preprocessor)
+        advanced_features = [
+            'load_lag_1d', 'load_lag_7d',
+            'temp_lag_1d', 'temp_lag_7d',
+            'temp_x_dayofweek', 'load_x_temp',
+            'temp_range', 'load_ma_7d', 'load_ma_30d'
+        ]
+
+        for feat in advanced_features:
+            if feat in df.columns:
+                features_df[feat] = df[feat]
+
+        # Drop rows with NaN (from lag features)
+        features_df = features_df.dropna()
+
         return features_df
 
     def train(self, df: pd.DataFrame, test_size: float = 0.2) -> Dict:
@@ -95,18 +145,20 @@ class AnomalyDetector:
         """
         # Prepare features
         X = self.prepare_features(df)
-        y = df['is_anomaly']
+
+        # Align target with features (important after dropna)
+        y = df.loc[X.index, 'is_anomaly']
 
         # Store feature names
         self.feature_names = X.columns.tolist()
 
         # Split data
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=42, stratify=y
+            X, y, test_size=test_size, random_state=self.random_state, stratify=y
         )
 
         # Train model
-        print("Training Random Forest model...")
+        print(f"Training {self.model_type.upper()} model...")
         self.model.fit(X_train, y_train)
         self.is_trained = True
 

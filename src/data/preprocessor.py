@@ -237,6 +237,21 @@ class Preprocessor:
         # Month-over-month changes
         feature_df['load_mom'] = feature_df.groupby('region')['val_cargaenergiamwmed'].pct_change(periods=30)
 
+        # Lag features (t-1, t-7) for ML models
+        for lag in [1, 7]:
+            feature_df[f'load_lag_{lag}d'] = feature_df.groupby('region')['val_cargaenergiamwmed'].shift(lag)
+            feature_df[f'temp_lag_{lag}d'] = feature_df.groupby('region')['temp_mean'].shift(lag)
+
+        # Interaction features
+        feature_df['temp_x_dayofweek'] = feature_df['temp_mean'] * feature_df['day_of_week']
+        feature_df['load_x_temp'] = feature_df['val_cargaenergiamwmed'] * feature_df['temp_mean']
+
+        # Weekend flag
+        feature_df['is_weekend'] = (feature_df['day_of_week'] >= 5).astype(int)
+
+        # Temperature ranges
+        feature_df['temp_range'] = feature_df['temp_max'] - feature_df['temp_min']
+
         print(f"✓ Engineered {feature_df.shape[1]} features")
         return feature_df
 
