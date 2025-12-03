@@ -34,27 +34,190 @@ st.set_page_config(
 
 
 # ============================================================================
-# CUSTOM CSS
+# CUSTOM CSS - PROFESSIONAL STYLING
 # ============================================================================
 
 st.markdown("""
     <style>
-    .main-header {
-        font-size: 3rem;
-        font-weight: 700;
-        color: #1f77b4;
-        margin-bottom: 1rem;
+    /* Import Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    /* Global Styles */
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
     }
+
+    /* Main container background */
+    .main {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+
+    /* Header Styles */
+    .main-header {
+        font-size: 3.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.02em;
+    }
+
     .sub-header {
-        font-size: 1.5rem;
-        color: #666;
+        font-size: 1.25rem;
+        color: #64748b;
+        font-weight: 400;
         margin-bottom: 2rem;
     }
+
+    /* Metric Cards */
     .metric-card {
-        background-color: #f0f2f6;
-        padding: 1rem;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        padding: 1.5rem;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        border: 1px solid rgba(148, 163, 184, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Sidebar Styling */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    }
+
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] .st-emotion-cache-16idsys p {
+        color: #e2e8f0 !important;
+    }
+
+    [data-testid="stSidebar"] h3 {
+        color: #f1f5f9 !important;
+        font-weight: 600;
+    }
+
+    /* Tab Styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background-color: transparent;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        background-color: #ffffff;
+        border-radius: 0.5rem 0.5rem 0 0;
+        padding: 12px 24px;
+        font-weight: 500;
+        border: 1px solid #e2e8f0;
+        border-bottom: none;
+        transition: all 0.2s ease;
+    }
+
+    .stTabs [data-baseweb="tab"]:hover {
+        background-color: #f8fafc;
+    }
+
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white !important;
+        border-color: transparent;
+    }
+
+    /* Chart Container */
+    .element-container iframe {
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Section Dividers */
+    hr {
+        margin: 2rem 0;
+        border: none;
+        height: 2px;
+        background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(148, 163, 184, 0.3) 50%,
+            transparent 100%);
+    }
+
+    /* DataFrames */
+    .stDataFrame {
+        border-radius: 0.75rem;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Buttons */
+    .stButton > button {
         border-radius: 0.5rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        font-weight: 500;
+        padding: 0.5rem 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Selectbox & Input Styling */
+    .stSelectbox > div > div,
+    .stMultiSelect > div > div,
+    .stDateInput > div > div {
+        border-radius: 0.5rem;
+        border-color: rgba(148, 163, 184, 0.3);
+    }
+
+    /* Info/Warning/Success boxes */
+    .stAlert {
+        border-radius: 0.75rem;
+        border: none;
+    }
+
+    /* Expander */
+    .streamlit-expanderHeader {
+        background-color: #f8fafc;
+        border-radius: 0.5rem;
+        font-weight: 500;
+    }
+
+    /* Footer */
+    .footer {
+        text-align: center;
+        padding: 2rem 0;
+        color: #64748b;
+        font-size: 0.875rem;
+    }
+
+    /* Spacing improvements */
+    .block-container {
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+    }
+
+    /* Section headers */
+    h3 {
+        color: #1e293b;
+        font-weight: 600;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    h4 {
+        color: #334155;
+        font-weight: 500;
+        margin-top: 1rem;
+        margin-bottom: 0.75rem;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -110,10 +273,13 @@ def load_processed_data(year: int = 2023) -> pd.DataFrame:
 # ============================================================================
 
 with st.sidebar:
-    st.image("https://via.placeholder.com/200x80/1f77b4/white?text=Energy+Analytics",
-             use_container_width=True)
-
-    st.markdown("---")
+    # Professional header with gradient
+    st.markdown("""
+        <div style='text-align: center; padding: 1.5rem 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 0.75rem; margin-bottom: 1.5rem;'>
+            <h2 style='color: white; margin: 0; font-size: 1.5rem; font-weight: 600;'>⚡ Energy Analytics</h2>
+            <p style='color: rgba(255,255,255,0.9); margin: 0.25rem 0 0 0; font-size: 0.875rem;'>Professional Dashboard</p>
+        </div>
+    """, unsafe_allow_html=True)
 
     st.markdown("### ⚙️ Configuration")
 
@@ -140,9 +306,19 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("### 📊 Data Info")
-    st.caption("Pipeline Status: ✅ Active")
-    st.caption("Last Updated: 2025-12-03")
-    st.caption("Data Sources: ONS + INMET")
+
+    # Info cards in sidebar
+    st.markdown("""
+        <div style='background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.5rem;'>
+            <p style='color: #10b981; margin: 0; font-weight: 500;'>✅ Pipeline Status: Active</p>
+        </div>
+        <div style='background: rgba(255,255,255,0.1); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 0.5rem;'>
+            <p style='color: #e2e8f0; margin: 0; font-size: 0.875rem;'>📅 Updated: 2025-12-03</p>
+        </div>
+        <div style='background: rgba(255,255,255,0.1); padding: 0.75rem; border-radius: 0.5rem;'>
+            <p style='color: #e2e8f0; margin: 0; font-size: 0.875rem;'>🌐 Sources: ONS + INMET (567 stations)</p>
+        </div>
+    """, unsafe_allow_html=True)
 
 
 # ============================================================================
@@ -185,7 +361,11 @@ st.markdown("---")
 # KPI ROW
 # ============================================================================
 
-st.markdown("### 📊 Key Performance Indicators")
+st.markdown("""
+    <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1rem 1.5rem; border-radius: 0.75rem; margin-bottom: 1.5rem;'>
+        <h3 style='color: white; margin: 0; font-size: 1.25rem; font-weight: 600;'>📊 Key Performance Indicators</h3>
+    </div>
+""", unsafe_allow_html=True)
 
 kpi_metrics = [
     {
@@ -388,9 +568,17 @@ with tab4:
 
 st.markdown("---")
 st.markdown("""
-    <div style='text-align: center; color: #666;'>
-        <p>⚡ Energy Analytics Dashboard v2.0 |
-        Data Sources: ONS + INMET (567 stations) |
-        Powered by Streamlit & Plotly</p>
+    <div class='footer'>
+        <div style='background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);'>
+            <p style='font-size: 1.125rem; font-weight: 600; color: #1e293b; margin-bottom: 0.5rem;'>⚡ Energy Analytics Dashboard v2.0</p>
+            <p style='color: #64748b; margin: 0.25rem 0;'>
+                <span style='color: #667eea; font-weight: 500;'>567 Weather Stations</span> •
+                <span style='color: #764ba2; font-weight: 500;'>4 Regions</span> •
+                <span style='color: #10b981; font-weight: 500;'>Real-time Analytics</span>
+            </p>
+            <p style='color: #94a3b8; font-size: 0.875rem; margin-top: 0.75rem;'>
+                Powered by Streamlit • Plotly • Python
+            </p>
+        </div>
     </div>
 """, unsafe_allow_html=True)
