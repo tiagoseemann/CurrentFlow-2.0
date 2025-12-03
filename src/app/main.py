@@ -20,6 +20,9 @@ from src.data.preprocessor import Preprocessor
 # Import dashboard components
 from src.app.components import metrics, charts
 
+# Import ML model
+from src.models.anomaly_detector import AnomalyDetector
+
 
 # ============================================================================
 # PAGE CONFIG
@@ -404,11 +407,12 @@ st.markdown("---")
 # ============================================================================
 
 # Tab-based navigation
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📈 Overview",
     "🗺️ Regional Analysis",
     "⚠️ Anomalies",
-    "🔬 Correlation"
+    "🔬 Correlation",
+    "🤖 ML Predictions"
 ])
 
 # TAB 1: OVERVIEW
@@ -560,6 +564,158 @@ with tab4:
                                                        key=abs,
                                                        ascending=False).head(5)
         st.dataframe(corr_df, use_container_width=True, hide_index=True)
+
+
+# TAB 5: ML PREDICTIONS
+with tab5:
+    st.markdown("### 🤖 Machine Learning Anomaly Detection")
+
+    st.info("""
+        This tab uses a **Random Forest classifier** trained to detect anomalies in energy load data.
+        The model uses features like load, temperature, day of week, and month to predict anomalies.
+    """)
+
+    # Try to load the model
+    model_path = Path("data/models/anomaly_detector.pkl")
+
+    if not model_path.exists():
+        st.warning("⚠️ ML model not found! Please train the model first.")
+        st.code("python scripts/train_model.py", language="bash")
+        st.info("After training, refresh this page to see predictions.")
+    else:
+        # Load model
+        @st.cache_resource
+        def load_ml_model():
+            return AnomalyDetector.load(str(model_path))
+
+        try:
+            detector = load_ml_model()
+            st.success("✅ Model loaded successfully!")
+
+            # Model info
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Model Type", "Random Forest")
+            with col2:
+                st.metric("Features Used", len(detector.feature_names) if detector.feature_names else "N/A")
+            with col3:
+                st.metric("Status", "Trained" if detector.is_trained else "Not Trained")
+
+            st.markdown("---")
+
+            # Make predictions
+            st.markdown("#### 📊 Model Predictions vs Ground Truth")
+
+            # Predict on current data
+            predictions = detector.predict(df)
+            prediction_proba = detector.predict_proba(df)
+
+            # Add predictions to dataframe
+            df_with_pred = df.copy()
+            df_with_pred['ml_prediction'] = predictions
+            df_with_pred['ml_confidence'] = prediction_proba[:, 1]  # Probability of anomaly
+
+            # Comparison metrics
+            col1, col2, col3, col4 = st.columns(4)
+
+            with col1:
+                st.metric(
+                    "ML Predicted Anomalies",
+                    f"{predictions.sum()}"
+                )
+
+            with col2:
+                st.metric(
+                    "Ground Truth Anomalies",
+                    f"{df['is_anomaly'].sum()}"
+                )
+
+            with col3:
+                agreement = (predictions == df['is_anomaly']).mean()
+                st.metric(
+                    "Agreement Rate",
+                    f"{agreement:.1%}"
+                )
+
+            with col4:
+                avg_confidence = prediction_proba[predictions == 1, 1].mean() if predictions.sum() > 0 else 0
+                st.metric(
+                    "Avg Confidence",
+                    f"{avg_confidence:.1%}"
+                )
+
+            # Feature importance
+            st.markdown("---")
+            st.markdown("#### 🎯 Feature Importance")
+
+            importance_df = detector.get_feature_importance()
+
+            # Create bar chart for feature importance
+            import plotly.graph_objects as go
+
+            fig_importance = go.Figure(data=[
+                go.Bar(
+                    x=importance_df['importance'],
+                    y=importance_df['feature'],
+                    orientation='h',
+                    marker_color='rgba(102, 126, 234, 0.8)',
+                    text=importance_df['importance'].round(3),
+                    textposition='auto',
+                )
+            ])
+
+            fig_importance.update_layout(
+                title="Random Forest Feature Importance",
+                xaxis_title="Importance Score",
+                yaxis_title="Feature",
+                height=400,
+                template='plotly_white',
+                showlegend=False
+            )
+
+            st.plotly_chart(fig_importance, use_container_width=True)
+
+            # Prediction details
+            st.markdown("---")
+            st.markdown("#### 🔍 Prediction Details")
+
+            # Show predictions where model disagrees with ground truth
+            disagreements = df_with_pred[
+                df_with_pred['ml_prediction'] != df_with_pred['is_anomaly']
+            ]
+
+            if len(disagreements) > 0:
+                st.warning(f"⚠️ Found {len(disagreements)} cases where ML prediction differs from ground truth")
+
+                disagreements_display = disagreements[[
+                    'date', 'region', 'val_cargaenergiamwmed', 'temp_mean',
+                    'is_anomaly', 'ml_prediction', 'ml_confidence'
+                ]].copy()
+
+                disagreements_display.columns = [
+                    'Date', 'Region', 'Load (MW)', 'Temp (°C)',
+                    'Ground Truth', 'ML Prediction', 'Confidence'
+                ]
+
+                st.dataframe(disagreements_display, use_container_width=True, hide_index=True)
+            else:
+                st.success("✅ Perfect agreement between ML predictions and ground truth!")
+
+            # Show top ML predictions by confidence
+            st.markdown("---")
+            st.markdown("#### 🎯 Top ML Anomaly Predictions (by confidence)")
+
+            ml_anomalies = df_with_pred[df_with_pred['ml_prediction'] == 1].nlargest(
+                10, 'ml_confidence'
+            )[['date', 'region', 'val_cargaenergiamwmed', 'temp_mean', 'ml_confidence', 'is_anomaly']]
+
+            ml_anomalies.columns = ['Date', 'Region', 'Load (MW)', 'Temp (°C)', 'Confidence', 'Ground Truth']
+
+            st.dataframe(ml_anomalies, use_container_width=True, hide_index=True)
+
+        except Exception as e:
+            st.error(f"Error loading model: {str(e)}")
+            st.info("Try retraining the model: `python scripts/train_model.py`")
 
 
 # ============================================================================
