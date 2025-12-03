@@ -13,7 +13,7 @@ REGIONS = {
 
 all_df = pd.concat(REGIONS.values(), ignore_index=True)
 
-st.title("Dashboard")
+st.title("Dashboard - Current Flow")
 
 regiao = st.selectbox("Região", REGIONS.keys())
 df = REGIONS[regiao]
