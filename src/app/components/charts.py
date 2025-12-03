@@ -396,3 +396,228 @@ def create_anomaly_scatter(
     )
 
     return fig
+
+
+def create_time_series_with_moving_avg(
+    df: pd.DataFrame,
+    x_col: str,
+    y_col: str,
+    windows: List[int] = [7, 30],
+    title: str = "Time Series with Moving Averages",
+    y_label: str = "Value",
+    height: int = 500
+) -> go.Figure:
+    """
+    Create time series with multiple moving averages.
+
+    Args:
+        df: DataFrame with data
+        x_col: Date column
+        y_col: Value column
+        windows: List of window sizes for moving averages (default: 7 and 30 days)
+        title: Chart title
+        y_label: Y-axis label
+        height: Chart height
+
+    Returns:
+        Plotly Figure
+
+    Example:
+        >>> fig = create_time_series_with_moving_avg(
+        ...     df=data,
+        ...     x_col='date',
+        ...     y_col='val_cargaenergiamwmed',
+        ...     windows=[7, 30],
+        ...     title='Energy Load with Moving Averages'
+        ... )
+    """
+    fig = go.Figure()
+
+    # Original data (lighter)
+    fig.add_trace(go.Scatter(
+        x=df[x_col],
+        y=df[y_col],
+        mode='lines',
+        name='Original',
+        line=dict(color=COLORS['primary'], width=1, dash='dot'),
+        opacity=0.5
+    ))
+
+    # Moving averages
+    colors = [COLORS['warning'], COLORS['danger'], COLORS['success']]
+    for i, window in enumerate(windows):
+        ma = df[y_col].rolling(window=window, center=False).mean()
+        fig.add_trace(go.Scatter(
+            x=df[x_col],
+            y=ma,
+            mode='lines',
+            name=f'{window}-day MA',
+            line=dict(color=colors[i % len(colors)], width=2)
+        ))
+
+    fig.update_layout(
+        title=title,
+        xaxis_title=x_col.title(),
+        yaxis_title=y_label,
+        hovermode='x unified',
+        height=height,
+        template='plotly_white',
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+
+    return fig
+
+
+def create_seasonal_analysis(
+    df: pd.DataFrame,
+    date_col: str,
+    value_col: str,
+    title: str = "Seasonal Analysis",
+    height: int = 500
+) -> go.Figure:
+    """
+    Create seasonal analysis chart showing patterns by season.
+
+    Args:
+        df: DataFrame with data
+        date_col: Date column
+        value_col: Value column
+        title: Chart title
+        height: Chart height
+
+    Returns:
+        Plotly Figure
+
+    Example:
+        >>> fig = create_seasonal_analysis(
+        ...     df=data,
+        ...     date_col='date',
+        ...     value_col='val_cargaenergiamwmed'
+        ... )
+    """
+    # Add season column
+    df_copy = df.copy()
+    df_copy[date_col] = pd.to_datetime(df_copy[date_col])
+    df_copy['month'] = df_copy[date_col].dt.month
+
+    # Define seasons (Southern Hemisphere)
+    def get_season(month):
+        if month in [12, 1, 2]:
+            return 'Summer'
+        elif month in [3, 4, 5]:
+            return 'Fall'
+        elif month in [6, 7, 8]:
+            return 'Winter'
+        else:
+            return 'Spring'
+
+    df_copy['season'] = df_copy['month'].apply(get_season)
+
+    # Calculate statistics by season
+    seasonal_stats = df_copy.groupby('season')[value_col].agg(['mean', 'std']).reset_index()
+
+    # Order seasons
+    season_order = ['Summer', 'Fall', 'Winter', 'Spring']
+    seasonal_stats['season'] = pd.Categorical(
+        seasonal_stats['season'],
+        categories=season_order,
+        ordered=True
+    )
+    seasonal_stats = seasonal_stats.sort_values('season')
+
+    # Create box plot by season
+    fig = go.Figure()
+
+    season_colors = {
+        'Summer': '#f39c12',
+        'Fall': '#e67e22',
+        'Winter': '#3498db',
+        'Spring': '#2ecc71'
+    }
+
+    for season in season_order:
+        season_data = df_copy[df_copy['season'] == season][value_col]
+        fig.add_trace(go.Box(
+            y=season_data,
+            name=season,
+            marker_color=season_colors.get(season, COLORS['primary']),
+            boxmean='sd'
+        ))
+
+    fig.update_layout(
+        title=title,
+        xaxis_title="Season",
+        yaxis_title=value_col.replace('_', ' ').title(),
+        template='plotly_white',
+        height=height,
+        showlegend=False
+    )
+
+    return fig
+
+
+def create_monthly_heatmap(
+    df: pd.DataFrame,
+    date_col: str,
+    value_col: str,
+    title: str = "Monthly Patterns Heatmap"
+) -> go.Figure:
+    """
+    Create heatmap showing monthly patterns (day vs month).
+
+    Args:
+        df: DataFrame with data
+        date_col: Date column
+        value_col: Value column to aggregate
+        title: Chart title
+
+    Returns:
+        Plotly Figure
+
+    Example:
+        >>> fig = create_monthly_heatmap(
+        ...     df=data,
+        ...     date_col='date',
+        ...     value_col='val_cargaenergiamwmed'
+        ... )
+    """
+    df_copy = df.copy()
+    df_copy[date_col] = pd.to_datetime(df_copy[date_col])
+    df_copy['month'] = df_copy[date_col].dt.month
+    df_copy['day'] = df_copy[date_col].dt.day
+
+    # Create pivot table
+    heatmap_data = df_copy.pivot_table(
+        values=value_col,
+        index='day',
+        columns='month',
+        aggfunc='mean'
+    )
+
+    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    fig = go.Figure(data=go.Heatmap(
+        z=heatmap_data.values,
+        x=[month_names[i-1] for i in heatmap_data.columns],
+        y=heatmap_data.index,
+        colorscale='RdYlBu_r',
+        colorbar=dict(title=value_col.replace('_', ' ').title()),
+        hovertemplate='Month: %{x}<br>Day: %{y}<br>Value: %{z:.1f}<extra></extra>'
+    ))
+
+    fig.update_layout(
+        title=title,
+        xaxis_title="Month",
+        yaxis_title="Day of Month",
+        template='plotly_white',
+        height=600
+    )
+
+    return fig

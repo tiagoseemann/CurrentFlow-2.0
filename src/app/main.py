@@ -494,6 +494,44 @@ with tab2:
                                'Temp Mean (°C)', 'Temp Std', 'Anomalies']
     st.dataframe(regional_stats, use_container_width=True)
 
+    # Temporal Analysis
+    st.markdown("---")
+    st.markdown("### 📅 Temporal & Seasonal Analysis")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("#### Moving Averages (7 & 30 days)")
+        fig_ma = charts.create_time_series_with_moving_avg(
+            df=df,
+            x_col='date',
+            y_col='val_cargaenergiamwmed',
+            windows=[7, 30],
+            title='Energy Load with Moving Averages',
+            y_label='Energy Load (MW)'
+        )
+        st.plotly_chart(fig_ma, use_container_width=True)
+
+    with col2:
+        st.markdown("#### Seasonal Patterns")
+        fig_seasonal = charts.create_seasonal_analysis(
+            df=df,
+            date_col='date',
+            value_col='val_cargaenergiamwmed',
+            title='Energy Load by Season'
+        )
+        st.plotly_chart(fig_seasonal, use_container_width=True)
+
+    # Monthly heatmap
+    st.markdown("#### Monthly Patterns Heatmap")
+    fig_heatmap = charts.create_monthly_heatmap(
+        df=df,
+        date_col='date',
+        value_col='val_cargaenergiamwmed',
+        title='Average Energy Load by Day and Month'
+    )
+    st.plotly_chart(fig_heatmap, use_container_width=True)
+
 
 # TAB 3: ANOMALIES
 with tab3:
