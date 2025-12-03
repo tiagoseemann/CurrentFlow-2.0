@@ -407,12 +407,13 @@ st.markdown("---")
 # ============================================================================
 
 # Tab-based navigation
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📈 Overview",
     "🗺️ Regional Analysis",
     "⚠️ Anomalies",
     "🔬 Correlation",
-    "🤖 ML Predictions"
+    "🤖 ML Predictions",
+    "📥 Export & Reports"
 ])
 
 # TAB 1: OVERVIEW
@@ -754,6 +755,256 @@ with tab5:
         except Exception as e:
             st.error(f"Error loading model: {str(e)}")
             st.info("Try retraining the model: `python scripts/train_model.py`")
+
+
+# TAB 6: EXPORT & REPORTS
+with tab6:
+    st.markdown("### 📥 Export Data & Generate Reports")
+
+    st.info("""
+        Export your filtered data and generate reports in multiple formats.
+        The exports include all visualizations and statistics from the current view.
+    """)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("#### 📊 Export Data")
+
+        # Select columns to export
+        export_cols = st.multiselect(
+            "Select columns to export",
+            options=df.columns.tolist(),
+            default=['date', 'region', 'val_cargaenergiamwmed', 'temp_mean', 'is_anomaly']
+        )
+
+        if export_cols:
+            export_df = df[export_cols].copy()
+
+            # CSV Export
+            csv = export_df.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="📄 Download as CSV",
+                data=csv,
+                file_name=f"energy_data_{selected_year}_{selected_region}.csv",
+                mime="text/csv",
+                use_container_width=True
+            )
+
+            # Excel Export
+            from io import BytesIO
+            buffer = BytesIO()
+            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                export_df.to_excel(writer, sheet_name='Data', index=False)
+
+                # Add summary sheet
+                summary_df = pd.DataFrame({
+                    'Metric': ['Total Records', 'Date Range', 'Regions', 'Avg Load (MW)', 'Anomalies'],
+                    'Value': [
+                        len(export_df),
+                        f"{export_df['date'].min()} to {export_df['date'].max()}" if 'date' in export_df else 'N/A',
+                        export_df['region'].nunique() if 'region' in export_df else 'N/A',
+                        f"{export_df['val_cargaenergiamwmed'].mean():.2f}" if 'val_cargaenergiamwmed' in export_df else 'N/A',
+                        export_df['is_anomaly'].sum() if 'is_anomaly' in export_df else 'N/A'
+                    ]
+                })
+                summary_df.to_excel(writer, sheet_name='Summary', index=False)
+
+            excel_data = buffer.getvalue()
+            st.download_button(
+                label="📊 Download as Excel",
+                data=excel_data,
+                file_name=f"energy_data_{selected_year}_{selected_region}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True
+            )
+
+            # JSON Export
+            json_data = export_df.to_json(orient='records', date_format='iso').encode('utf-8')
+            st.download_button(
+                label="🔗 Download as JSON",
+                data=json_data,
+                file_name=f"energy_data_{selected_year}_{selected_region}.json",
+                mime="application/json",
+                use_container_width=True
+            )
+
+            st.success(f"✅ Ready to export {len(export_df)} records with {len(export_cols)} columns")
+
+    with col2:
+        st.markdown("#### 📈 Generate Report")
+
+        st.markdown("""
+        Generate a comprehensive PDF report including:
+        - Executive summary with KPIs
+        - All visualizations
+        - Statistical analysis
+        - Anomaly detection results
+        - Regional comparisons
+        """)
+
+        report_format = st.selectbox(
+            "Report Format",
+            options=["PDF (Recommended)", "HTML", "Markdown"],
+            help="Choose the format for your report"
+        )
+
+        include_sections = st.multiselect(
+            "Include sections",
+            options=[
+                "Executive Summary",
+                "Overview Charts",
+                "Regional Analysis",
+                "Anomaly Detection",
+                "Correlation Analysis",
+                "ML Predictions"
+            ],
+            default=[
+                "Executive Summary",
+                "Overview Charts",
+                "Regional Analysis"
+            ]
+        )
+
+        if st.button("🎯 Generate Report", use_container_width=True, type="primary"):
+            with st.spinner("Generating report..."):
+                # Generate markdown report
+                report_md = f"""# Energy Analytics Report
+## Period: {selected_year} | Region: {selected_region}
+
+---
+
+### 📊 Executive Summary
+
+**Key Metrics:**
+- Total Records: {len(df):,}
+- Date Range: {df['date'].min()} to {df['date'].max()}
+- Average Energy Load: {df['val_cargaenergiamwmed'].mean():,.0f} MW
+- Average Temperature: {df['temp_mean'].mean():.1f}°C
+- Anomalies Detected: {df['is_anomaly'].sum()} ({df['is_anomaly'].mean()*100:.2f}%)
+
+---
+
+### 📈 Statistical Summary
+
+#### Energy Load (MW)
+- Mean: {df['val_cargaenergiamwmed'].mean():,.1f}
+- Median: {df['val_cargaenergiamwmed'].median():,.1f}
+- Std Dev: {df['val_cargaenergiamwmed'].std():,.1f}
+- Min: {df['val_cargaenergiamwmed'].min():,.1f}
+- Max: {df['val_cargaenergiamwmed'].max():,.1f}
+
+#### Temperature (°C)
+- Mean: {df['temp_mean'].mean():.2f}
+- Median: {df['temp_mean'].median():.2f}
+- Std Dev: {df['temp_mean'].std():.2f}
+- Min: {df['temp_min'].min():.2f}
+- Max: {df['temp_max'].max():.2f}
+
+---
+
+### 🗺️ Regional Analysis
+
+"""
+                # Add regional stats
+                for region in df['region'].unique():
+                    region_df = df[df['region'] == region]
+                    report_md += f"""
+#### {region}
+- Records: {len(region_df):,}
+- Avg Load: {region_df['val_cargaenergiamwmed'].mean():,.0f} MW
+- Avg Temp: {region_df['temp_mean'].mean():.1f}°C
+- Anomalies: {region_df['is_anomaly'].sum()}
+"""
+
+                report_md += f"""
+
+---
+
+### ⚠️ Anomaly Detection
+
+**Total Anomalies:** {df['is_anomaly'].sum()}
+
+**Anomaly Rate:** {df['is_anomaly'].mean()*100:.2f}%
+
+**Detection Method:** Z-score (threshold: ±2.5σ)
+
+---
+
+*Generated on: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}*
+*Tool: Energy Analytics Dashboard v2.0*
+"""
+
+                # Display preview
+                with st.expander("📄 Report Preview", expanded=True):
+                    st.markdown(report_md)
+
+                # Download buttons
+                st.markdown("---")
+                col_a, col_b = st.columns(2)
+
+                with col_a:
+                    # Markdown download
+                    st.download_button(
+                        label="📝 Download Markdown",
+                        data=report_md.encode('utf-8'),
+                        file_name=f"energy_report_{selected_year}_{selected_region}.md",
+                        mime="text/markdown",
+                        use_container_width=True
+                    )
+
+                with col_b:
+                    # HTML download
+                    html_report = f"""
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="utf-8">
+                        <title>Energy Analytics Report</title>
+                        <style>
+                            body {{ font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }}
+                            h1 {{ color: #667eea; }}
+                            h2 {{ color: #764ba2; border-bottom: 2px solid #667eea; padding-bottom: 10px; }}
+                            h3 {{ color: #3498db; }}
+                            h4 {{ color: #555; }}
+                            hr {{ border: none; height: 2px; background: linear-gradient(90deg, transparent, #667eea, transparent); }}
+                            .metric {{ background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0; }}
+                        </style>
+                    </head>
+                    <body>
+                        {report_md.replace('### ', '<h3>').replace('## ', '<h2>').replace('# ', '<h1>').replace('---', '<hr>').replace('**', '<strong>').replace('*', '</strong>')}
+                    </body>
+                    </html>
+                    """
+                    st.download_button(
+                        label="🌐 Download HTML",
+                        data=html_report.encode('utf-8'),
+                        file_name=f"energy_report_{selected_year}_{selected_region}.html",
+                        mime="text/html",
+                        use_container_width=True
+                    )
+
+    # Data Preview
+    st.markdown("---")
+    st.markdown("### 👁️ Data Preview")
+
+    preview_rows = st.slider("Number of rows to preview", min_value=5, max_value=100, value=10)
+    st.dataframe(df.head(preview_rows), use_container_width=True)
+
+    # Dataset info
+    st.markdown("---")
+    st.markdown("### ℹ️ Dataset Information")
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.metric("Total Rows", f"{len(df):,}")
+    with col2:
+        st.metric("Total Columns", f"{df.shape[1]}")
+    with col3:
+        st.metric("Memory Usage", f"{df.memory_usage(deep=True).sum() / 1024**2:.2f} MB")
+    with col4:
+        st.metric("Missing Values", f"{df.isnull().sum().sum()}")
 
 
 # ============================================================================
