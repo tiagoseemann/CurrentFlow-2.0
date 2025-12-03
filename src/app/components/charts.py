@@ -90,13 +90,11 @@ def create_dual_axis_chart(
         title=title,
         xaxis=dict(title=x_col.title()),
         yaxis=dict(
-            title=y1_label,
-            titlefont=dict(color=COLORS['primary']),
+            title=dict(text=y1_label, font=dict(color=COLORS['primary'])),
             tickfont=dict(color=COLORS['primary'])
         ),
         yaxis2=dict(
-            title=y2_label,
-            titlefont=dict(color=COLORS['danger']),
+            title=dict(text=y2_label, font=dict(color=COLORS['danger'])),
             tickfont=dict(color=COLORS['danger']),
             overlaying='y',
             side='right'
