@@ -315,11 +315,21 @@ def ml_predictions(df):
 
         st.markdown("---")
 
-        # Predições
-        predictions = detector.predict(df)
-        prediction_proba = detector.predict_proba(df)
+        # Prepare features to get valid indices (after dropna)
+        df_clean = detector.prepare_features(df)
+        valid_indices = df_clean.index
 
-        df_pred = df.copy()
+        # Info sobre registros válidos
+        n_dropped = len(df) - len(valid_indices)
+        if n_dropped > 0:
+            st.info(f"ℹ️ {n_dropped} registros excluídos devido a valores ausentes em features de lag (primeiros dias da série temporal)")
+
+        # Predições usando apenas registros válidos
+        df_valid = df.loc[valid_indices].copy()
+        predictions = detector.predict(df_valid)
+        prediction_proba = detector.predict_proba(df_valid)
+
+        df_pred = df_valid.copy()
         df_pred['ml_prediction'] = predictions
         df_pred['ml_confidence'] = prediction_proba[:, 1]
 
@@ -328,9 +338,11 @@ def ml_predictions(df):
         with col1:
             st.metric("Anomalias Previstas (ML)", f"{predictions.sum()}")
         with col2:
-            if 'is_anomaly' in df.columns:
-                agreement = (predictions == df['is_anomaly']).mean()
+            if 'is_anomaly' in df_valid.columns:
+                agreement = (predictions == df_valid['is_anomaly']).mean()
                 st.metric("Taxa de Concordância", f"{agreement:.1%}")
+            else:
+                st.metric("Registros Válidos", f"{len(df_valid)}/{len(df)}")
         with col3:
             avg_conf = prediction_proba[predictions == 1, 1].mean() if predictions.sum() > 0 else 0
             st.metric("Confiança Média", f"{avg_conf:.1%}")
