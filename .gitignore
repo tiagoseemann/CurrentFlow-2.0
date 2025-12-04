@@ -58,3 +58,9 @@ htmlcov/
 # Claude Code
 .claude/
 CLAUDE.md
+
+# Documentação interna
+EXECUTIVE_PRESENTATION.md
+IMPLEMENTATION_STATUS.md
+NEXT_STEPS.md
+DEVELOPMENT_PLAN.md
