@@ -59,35 +59,112 @@ st.markdown("""
 
 
 # ============================================================================
-# CARREGAMENTO DE DADOS (Pipeline Robusto)
+# CARREGAMENTO DE DADOS (Pipeline Robusto - Multi-Ano)
 # ============================================================================
 
 @st.cache_data(ttl=3600)
-def load_processed_data(year: int = 2023) -> pd.DataFrame:
+def load_processed_data_single_year(year: int) -> pd.DataFrame:
     """
-    Carrega dados processados usando o pipeline robusto.
-    Similar ao app original mas com melhor arquitetura.
+    Carrega dados processados de um único ano.
     """
-    cache_path = Path("data/processed/energy_weather_processed.parquet")
+    cache_path = Path(f"data/processed/energy_weather_{year}.parquet")
 
     if cache_path.exists():
         return pd.read_parquet(cache_path)
 
     # Se não existe cache, roda pipeline
-    st.info("Processando dados pela primeira vez...")
-    ons_loader = ONSLoader()
-    inmet_loader = INMETLoader()
-    preprocessor = Preprocessor()
+    st.info(f"⏳ Processando dados de {year}...")
+    try:
+        ons_loader = ONSLoader()
+        inmet_loader = INMETLoader()
+        preprocessor = Preprocessor()
 
-    ons_df = ons_loader.load(year)
-    inmet_df = inmet_loader.load(year)
-    df = preprocessor.process(ons_df, inmet_df, save=True)
+        ons_df = ons_loader.load(year)
+        inmet_df = inmet_loader.load(year)
+        df = preprocessor.process(ons_df, inmet_df, save=False)
 
-    return df
+        # Salva com nome específico do ano
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        df.to_parquet(cache_path)
+        st.success(f"✅ Dados de {year} processados com sucesso!")
+
+        return df
+    except Exception as e:
+        st.warning(f"⚠️ Não foi possível carregar dados de {year}: {str(e)}")
+        return pd.DataFrame()
 
 
-# Carrega dados
-df = load_processed_data(2023)
+@st.cache_data(ttl=3600)
+def load_processed_data_multi_year(years: list) -> pd.DataFrame:
+    """
+    Carrega dados processados de múltiplos anos.
+    """
+    dfs = []
+    for year in years:
+        df_year = load_processed_data_single_year(year)
+        if not df_year.empty:
+            dfs.append(df_year)
+
+    if dfs:
+        df_combined = pd.concat(dfs, ignore_index=True)
+        df_combined = df_combined.sort_values('date').reset_index(drop=True)
+        return df_combined
+    else:
+        # Fallback para 2023 se nenhum ano foi carregado
+        cache_path = Path("data/processed/energy_weather_processed.parquet")
+        if cache_path.exists():
+            return pd.read_parquet(cache_path)
+        return pd.DataFrame()
+
+
+# Anos disponíveis para seleção
+AVAILABLE_YEARS = [2021, 2022, 2023, 2024]
+
+
+# ============================================================================
+# INTERFACE PRINCIPAL (Estrutura do App Original)
+# ============================================================================
+
+st.title("⚡ Dashboard de Análise Energética")
+
+# ============================================================================
+# SIDEBAR COM SELETOR DE ANO E MÉTRICAS
+# ============================================================================
+
+with st.sidebar:
+    st.markdown("### 📅 Seleção de Período")
+
+    # Seletor de ano
+    year_option = st.selectbox(
+        "Selecione o(s) ano(s)",
+        ["2023 (atual)", "2022", "2021", "2024", "Todos os anos (2021-2024)"],
+        help="Escolha um ano específico ou todos os anos disponíveis"
+    )
+
+    # Mapeia opção para anos
+    if "Todos" in year_option:
+        selected_years = AVAILABLE_YEARS
+        st.caption(f"📊 Carregando {len(selected_years)} anos de dados")
+    elif "2023" in year_option:
+        selected_years = [2023]
+    elif "2022" in year_option:
+        selected_years = [2022]
+    elif "2021" in year_option:
+        selected_years = [2021]
+    elif "2024" in year_option:
+        selected_years = [2024]
+
+    # Carrega dados baseado na seleção
+    with st.spinner(f"Carregando dados de {len(selected_years)} ano(s)..."):
+        if len(selected_years) == 1:
+            df = load_processed_data_single_year(selected_years[0])
+        else:
+            df = load_processed_data_multi_year(selected_years)
+
+    # Verifica se dados foram carregados
+    if df.empty:
+        st.error("❌ Nenhum dado disponível. Usando dados de 2023 como fallback.")
+        df = load_processed_data_single_year(2023)
 
 # Prepara dicionário de regiões (como no app original)
 REGIONS = {
@@ -98,15 +175,8 @@ REGIONS = {
     "Norte": df[df['region'] == 'Norte']
 }
 
-
 # ============================================================================
-# INTERFACE PRINCIPAL (Estrutura do App Original)
-# ============================================================================
-
-st.title("⚡ Dashboard de Análise Energética")
-
-# ============================================================================
-# SIDEBAR COM INFORMAÇÕES E MÉTRICAS
+# SIDEBAR - MÉTRICAS E INFORMAÇÕES
 # ============================================================================
 
 with st.sidebar:
