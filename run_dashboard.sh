@@ -31,5 +31,5 @@ echo ""
 echo "Pressione Ctrl+C para parar"
 echo ""
 
-# Roda o Streamlit
-uv run streamlit run src/app/main.py
+# Roda o Streamlit (app.py baseado na branch cadona)
+uv run streamlit run src/app.py
