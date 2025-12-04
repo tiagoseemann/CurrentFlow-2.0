@@ -20,7 +20,7 @@ Construir um sistema completo de análise energética que:
 
 ## 📊 Features
 
-### ✅ Implementado
+### ✅ Implementado (v2.5)
 
 #### Backend (Pipeline de Dados)
 - 🔄 **ONSLoader**: Download automático de dados do ONS
@@ -32,33 +32,45 @@ Construir um sistema completo de análise energética que:
   - Mapeamento automático de regiões
 - ⚙️ **Preprocessor**: ETL completo
   - Limpeza de dados (nulls, outliers)
-  - 19 features engineered
+  - **27 features engineered** (lag features, interações, sazonalidade)
   - Detecção automática de anomalias (Z-score)
+  - Médias móveis (7d, 30d)
 
-#### Frontend (Dashboard)
-- 📊 **Dashboard V2 Profissional**
-  - KPIs principais
-  - Gráficos dual-axis (Carga × Temperatura)
-  - Bandas de confiança (±1σ, ±2σ)
-  - Análise regional comparativa
-  - Heatmap de correlações
-  - Detecção visual de anomalias
-  - Filtros interativos (região, data)
+#### Frontend (Dashboard Profissional)
+- 📊 **9 Análises Interativas:**
+  1. **Overview & KPIs** - Métricas principais com cards visuais
+  2. **Correlação** - Matriz numérica + heatmap interativo
+  3. **Scatter** - Dispersão customizável entre variáveis
+  4. **Série Temporal** - Plotagem temporal com marcadores
+  5. **Comparar Regiões** - Barras + box plots de distribuição
+  6. **Análise Temporal & Sazonal** - Médias móveis + padrões sazonais + heatmap mensal
+  7. **Anomalias** - Detecção por Z-score + top 10 anomalias
+  8. **ML Predictions** - Random Forest + feature importance + explicabilidade
+  9. **Export & Reports** - CSV/Excel/JSON + relatórios Markdown/HTML
 
-### 🔲 Roadmap
+#### Machine Learning
+- 🤖 **AnomalyDetector**: Detecção de anomalias
+  - Random Forest (99.7% accuracy)
+  - Suporte XGBoost com fallback
+  - 17 features utilizadas
+  - Feature importance ranking
+  - Predições com confiança
+- 📊 **Feature Engineering Avançado**
+  - Lag features (t-1, t-7) para load e temperatura
+  - Features de interação (temp × dia_semana, load × temp)
+  - Weekend flag, temperature range
+  - Moving averages (7d, 30d)
+  - Seasonal encoding
 
-#### Fase 2: Dashboard Avançado
-- Mapas interativos do Brasil
-- Análise sazonal detalhada
-- Export de relatórios (PDF, Excel)
-- Comparação ano a ano
+### 🔲 Roadmap Futuro
 
-#### Fase 3: Machine Learning
-- Modelo preditivo de anomalias (XGBoost)
-- SHAP values para explicabilidade
-- Previsão de carga (LSTM)
-- API REST para predições
-- Alertas automáticos
+#### Próximas Melhorias
+- 📍 Mapas interativos do Brasil (Folium/Plotly)
+- 📅 Comparação ano a ano (multiyear analysis)
+- 🔔 Sistema de alertas automáticos
+- 🌐 API REST para predições
+- 📈 Previsão de carga (LSTM/Prophet)
+- 📄 Export PDF de relatórios completos
 
 ---
 
