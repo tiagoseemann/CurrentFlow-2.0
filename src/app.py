@@ -105,25 +105,117 @@ REGIONS = {
 
 st.title("⚡ Dashboard de Análise Energética")
 
+# ============================================================================
+# SIDEBAR COM INFORMAÇÕES E MÉTRICAS
+# ============================================================================
+
+with st.sidebar:
+    st.markdown("---")
+    st.markdown("### 📊 Resumo dos Dados")
+
+    # Métricas gerais
+    total_registros = len(df)
+    periodo_inicio = df['date'].min().strftime('%d/%m/%Y')
+    periodo_fim = df['date'].max().strftime('%d/%m/%Y')
+
+    st.metric("Total de Registros", f"{total_registros:,}")
+    st.metric("Período", f"{periodo_inicio}")
+    st.caption(f"até {periodo_fim}")
+
+    # Anomalias
+    if 'is_anomaly' in df.columns:
+        total_anomalias = df['is_anomaly'].sum()
+        taxa_anomalias = (total_anomalias / len(df)) * 100
+        st.metric(
+            "Anomalias Detectadas",
+            f"{total_anomalias}",
+            delta=f"{taxa_anomalias:.2f}% dos dados",
+            delta_color="inverse"
+        )
+
+    # Carga média por região
+    st.markdown("---")
+    st.markdown("### ⚡ Carga Média por Região")
+    for region_name, region_df in REGIONS.items():
+        if region_name != "Todas as Regiões" and len(region_df) > 0:
+            media_carga = region_df['val_cargaenergiamwmed'].mean()
+            st.caption(f"{region_name}: **{media_carga:,.0f} MW**")
+
+    # Info adicional
+    st.markdown("---")
+    st.markdown("### ℹ️ Sobre")
+    st.caption(f"**Features:** {len(df.columns)} disponíveis")
+    st.caption(f"**Regiões:** {len(REGIONS) - 1} + Todas")
+    st.caption(f"**Análises:** 9 tipos")
+
+    # Footer
+    st.markdown("---")
+    st.caption("v2.5.1 | Dashboard Profissional")
+
+# ============================================================================
+# FILTROS E NAVEGAÇÃO
+# ============================================================================
+
 # Selectbox de região (como no app original)
 regiao = st.selectbox("🗺️ Região", list(REGIONS.keys()))
 df_filtrado = REGIONS[regiao]
 
-# Selectbox de tipo de análise (expandido do original)
-tipo = st.selectbox(
-    "📊 Escolha o tipo de análise",
-    [
-        "Overview & KPIs",
-        "Correlação",
-        "Scatter",
-        "Série temporal",
-        "Comparar regiões",
-        "Análise Temporal & Sazonal",
-        "Anomalias",
-        "ML Predictions",
-        "Export & Reports"
+# Filtro temporal interativo (opcional)
+col1, col2 = st.columns([2, 1])
+
+with col1:
+    # Selectbox de tipo de análise (expandido do original)
+    tipo = st.selectbox(
+        "📊 Escolha o tipo de análise",
+        [
+            "Overview & KPIs",
+            "Correlação",
+            "Scatter",
+            "Série temporal",
+            "Comparar regiões",
+            "Análise Temporal & Sazonal",
+            "Anomalias",
+            "ML Predictions",
+            "Export & Reports"
+        ]
+    )
+
+with col2:
+    # Toggle para filtro temporal
+    usar_filtro = st.checkbox("🗓️ Filtrar período", value=False, help="Ative para filtrar dados por período específico")
+
+# Aplicar filtro temporal se ativado
+if usar_filtro:
+    df_filtrado['date'] = pd.to_datetime(df_filtrado['date'])
+    data_min = df_filtrado['date'].min().date()
+    data_max = df_filtrado['date'].max().date()
+
+    col_data1, col_data2 = st.columns(2)
+    with col_data1:
+        data_inicio = st.date_input(
+            "Data Início",
+            value=data_min,
+            min_value=data_min,
+            max_value=data_max,
+            help="Selecione a data inicial do período"
+        )
+    with col_data2:
+        data_fim = st.date_input(
+            "Data Fim",
+            value=data_max,
+            min_value=data_min,
+            max_value=data_max,
+            help="Selecione a data final do período"
+        )
+
+    # Aplicar filtro
+    df_filtrado = df_filtrado[
+        (df_filtrado['date'].dt.date >= data_inicio) &
+        (df_filtrado['date'].dt.date <= data_fim)
     ]
-)
+
+    # Mostrar info sobre filtro aplicado
+    st.info(f"📅 Filtro ativo: {len(df_filtrado):,} registros entre {data_inicio.strftime('%d/%m/%Y')} e {data_fim.strftime('%d/%m/%Y')}")
 
 st.markdown("---")
 
