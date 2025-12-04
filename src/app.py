@@ -14,7 +14,7 @@ from src.data.loaders import ONSLoader, INMETLoader
 from src.data.preprocessor import Preprocessor
 
 # Import funções do dashboard
-import dashboard
+import src.dashboard as dashboard
 
 # ============================================================================
 # CONFIGURAÇÃO DA PÁGINA
